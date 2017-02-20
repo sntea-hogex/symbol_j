@@ -354,13 +354,15 @@ Theorem plus_comm : forall n m : nat,
 Proof.
   intros.
   induction n.
-  simpl.
-  rewrite -> plus_0_r.
-  reflexivity.
-  simpl.
-  rewrite -> IHn.
-  rewrite -> plus_n_Sm.
-  reflexivity.
+  Case "n = 0".
+    simpl.
+    rewrite -> plus_0_r.
+    reflexivity.
+  Case "n = S n".
+    simpl.
+    rewrite -> IHn.
+    rewrite -> plus_n_Sm.
+    reflexivity.
 Qed.
 
 Fixpoint double (n:nat) := 
@@ -382,5 +384,89 @@ Proof.
     rewrite <- plus_n_Sm.
     reflexivity.
 Qed.
+
+Theorem plus_assoc : forall n m p : nat,
+  n+(m+p) = (n+m)+p.
+Proof.
+  intros n m p.
+  induction n as [| nn].
+  Case "n = 0".
+    reflexivity.
+  Case "n = S n".
+    simpl.
+    rewrite -> IHnn.
+    reflexivity.
+Qed.
+
+Theorem mult_0_plus' : forall n m : nat,
+  (0+n)*m = n*m.
+Proof.
+  intros n m.
+  assert(H: 0+n = n).
+    Case "Proof of assertion". reflexivity.
+  rewrite -> H.
+  reflexivity. Qed.
+
+Theorem plus_rearrange_firsttry : forall n m p q : nat,
+  (n + m) + (p + q) = (m + n) + (p + q).
+Proof.
+  intros n m p q.
+  assert (H : n+m = m+n).
+    Case "Proof of assertion".
+    rewrite -> plus_comm. reflexivity.
+  rewrite -> H. reflexivity.
+Qed.
+
+Theorem plus_swap : forall n m p : nat,
+  n+(m+p) = m+(n+p).
+Proof.
+  intros.
+  rewrite -> plus_assoc.
+  assert(H : m+(n+p) = (m+n)+p).
+  Case "Proof of assertion".
+    rewrite -> plus_assoc.
+    reflexivity.
+  rewrite -> H.
+  assert(n+m = m+n).
+    rewrite -> plus_comm.
+    reflexivity.
+  rewrite -> H0.
+  reflexivity.
+Qed.
+
+Theorem hoge : forall m n : nat,
+  n + n * m = n * S m.
+Proof.
+  intros.
+  induction n.
+  rewrite plus_0_r.
+  reflexivity.
+  simpl.
+  rewrite plus_swap.
+  rewrite IHn.
+  reflexivity.
+Qed.
+
+Theorem mult_comm : forall m n : nat,
+  m*n = n*m.
+Proof.
+  intros.
+  induction m.
+  Case "m = 0".
+    rewrite mult_0_r.
+    reflexivity.
+  Case "m = S m".
+    (*ここでinduction n すると謎の仮定が出てくる
+     謎*)
+    simpl.
+    rewrite IHm.
+    rewrite hoge.
+    reflexivity.
+Qed.
+
+
+
+
+
 
 
