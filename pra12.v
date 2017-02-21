@@ -456,14 +456,30 @@ Proof.
     rewrite mult_0_r.
     reflexivity.
   Case "m = S m".
-    (*ここでinduction n すると謎の仮定が出てくる
-     謎*)
     simpl.
     rewrite IHm.
     rewrite hoge.
     reflexivity.
 Qed.
 
+Theorem even_n__oddb_Sn : forall n : nat,
+  evenb n = negb (evenb (S n)).
+Proof.
+  intros.
+  induction n as [| nn].
+  Case "n = 0".
+    reflexivity.
+  Case "n = S n".
+    assert(negb (evenb nn) = evenb (S nn)).
+      rewrite IHnn.
+      rewrite neg_involutiv.
+      reflexivity.
+    rewrite <- H.
+    assert(evenb (S (S nn)) = evenb nn).
+      reflexivity.
+    rewrite H0.
+    reflexivity.
+Qed.
 
 
 
