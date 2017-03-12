@@ -254,8 +254,6 @@ Proof.
     simpl. rewrite -> length_snoc.
     rewrite IHl'. reflexivity. Qed.
 
-SearchAbout natlist.
-
 Theorem app_nil_end : forall l : natlist,
   l ++ [] = l.
 Proof.
@@ -469,9 +467,93 @@ Proof.
   intros n m eq1 eq2.
   apply eq2. apply eq1.  Qed.
 
+Theorem silly_ex :
+  (forall n, evenb n = true -> oddb (S n) = true) ->
+  evenb 3 = true ->
+  oddb 4 = true.
+Proof.
+  intros.
+  apply H.
+  apply H0.
+Qed.
 
+Theorem silly3 : forall(n:nat),
+  true = beq_nat n 5 ->
+  beq_nat (S (S n)) 7 = true.
+Proof.
+  intros n H.
+  symmetry.
+  simpl. apply H. Qed.
 
+Theorem rev_exercise1 : forall (l l' : natlist),
+  l = rev l' ->
+  l' = rev l.
+Proof.
+  intros.
+  rewrite H.
+  symmetry.
+  rewrite rev_involutive.
+  reflexivity.
+Qed.
 
+Theorem beq_nat_sym : forall (n m : nat),
+  beq_nat n m = beq_nat m n.
+Proof.
+  intros n. induction n as [ | n'].
+  Case "n = O".
+    intros m.
+    destruct m.
+      reflexivity.
+      reflexivity.
+  Case "n = S n'".
+    intros m.
+    destruct m.
+      reflexivity.
+      simpl. apply IHn'.
+Qed.
+
+End NatList.
+
+Module Dictionary.
+
+Inductive dictionary : Type :=
+  | empty : dictionary
+  | record : nat -> nat -> dictionary -> dictionary.
+
+Definition insert (key value : nat) (d : dictionary) :
+dictionary :=
+  (record key value d).
+
+Fixpoint find (key : nat) (d : dictionary) : option nat:=
+  match d with
+  | empty => None
+  | record k v d' => if (beq_nat key k) then (Some v) else (find key d')
+  end.
+
+Theorem dictionary_invariant1 : forall (d : dictionary) (k v: nat),
+  (find k (insert k v d)) = Some v.
+Proof.
+  intros.
+  simpl.
+  assert(beq_nat k k = true).
+    induction k.
+      reflexivity.
+      simpl. apply IHk.
+  rewrite H. reflexivity.
+Qed.
+
+Theorem dictionary_invariant2 : forall (d : dictionary) (m n o: nat),
+  (beq_nat m n) = false -> (find m d) = (find m (insert n o d)).
+Proof.
+  intros.
+  simpl.
+  rewrite H.
+  reflexivity.
+Qed.
+
+End Dictionary.
+
+Definition beq_nat_sym := NatList.beq_nat_sym.
 
 
 

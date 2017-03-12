@@ -84,6 +84,8 @@ Fixpoint evenb (n:nat) : bool :=
   | S (S nn) => evenb nn
   end.
 
+Definition oddb (n:nat) : bool := negb(evenb n).
+
 Module Playground2.
 
 Fixpoint plux (n : nat) (m : nat) : nat :=
