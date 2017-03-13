@@ -1,3 +1,5 @@
+(*Add LoadPath "./".*)
+
 Require Export basics_j.
 
 Module NatList.
