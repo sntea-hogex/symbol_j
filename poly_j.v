@@ -256,6 +256,141 @@ Proof.
 Qed.
 
 
+Fixpoint flat_map {X Y : Type} (f:X-> list Y) (l:list X) : list Y :=
+  match l with
+  | [] => []
+  | h::t => f h ++ flat_map f t
+  end.
+
+
+Example test_flat_map1:
+  flat_map (fun n => [n,n,n]) [1,5,4]
+  = [1, 1, 1, 5, 5, 5, 4, 4, 4].
+Proof. reflexivity. Qed.
+
+Definition option_map {X Y : Type} (f : X -> Y) (xo : option X)
+                      : option Y :=
+  match xo with
+    | None => None
+    | Some x => Some (f x)
+  end.
+
+Fixpoint fold {X Y:Type} (f: X->Y->Y) (l:list X) (b:Y) : Y :=
+  match l with
+  | nil => b
+  | h :: t => f h (fold f t b)
+  end.
+
+Definition constfun {X: Type} (x: X) : nat->X :=
+  fun (k:nat) => x.
+
+Definition override {X: Type} (f: nat -> X) (k:nat) (x:X) : nat->X :=
+  fun (k':nat) => if beq_nat k k' then x else f k'.
+
+Theorem override_example : forall (b:bool),
+  (override (constfun b) 3 true) 2 = b.
+Proof.
+  destruct b.
+  reflexivity.
+  reflexivity.
+Qed.
+
+Theorem unfold_example_bad : forall m n,
+  3 + n = m -> plus3 n+1 = m+1.
+Proof.
+  intros m n H.
+  unfold plus3.
+  rewrite H.
+  reflexivity. Qed.
+
+Theorem override_eq : forall {X:Type} x k (f:nat->X),
+  (override f k x) k = x.
+Proof.
+  intros X x k f.
+  unfold override.
+  rewrite <- beq_nat_refl.
+  reflexivity. Qed.
+
+Theorem override_neq : forall {X:Type} x1 x2 k1 k2 (f : nat->X),
+  f k1 = x1 -> beq_nat k2 k1 = false -> (override f k2 x2) k1 = x1.
+Proof.
+  intros.
+  unfold override.
+  rewrite H0.
+  rewrite H.
+  reflexivity.
+Qed.
+
+Theorem eq_add_S : forall (n m : nat),
+  S n = S m -> n = m.
+Proof.
+  intros n m eq. inversion eq. reflexivity. Qed.
+
+Theorem silly4 : forall (n m : nat),
+  [n] = [m] -> n = m.
+Proof.
+  intros n o eq. inversion eq. reflexivity. Qed.
+
+Theorem silly5 : forall(n m o : nat),
+  [n,m] = [o,o] -> [n] = [m].
+Proof.
+  intros n m o eq. inversion eq. reflexivity. Qed.
+
+Example sillyex1 : forall (X : Type) (x y z : X) (l j : list X),
+  x :: y :: l = z :: j -> y :: l = x :: j -> x = y.
+Proof.
+  intros.
+  inversion H.
+  inversion H0.
+  rewrite H2.
+  reflexivity.
+Qed.
+
+Theorem silly6 : forall(n : nat),
+  S n = O ->
+  2 + 2 = 5.
+Proof.
+  intros n contra.
+  inversion contra.
+Qed.
+
+Theorem silly7 : forall (n m : nat),
+  false = true -> [n] = [m].
+Proof.
+  intros n m contra. inversion contra. Qed.
+
+Example sillyex2 : forall (X : Type) (x y z : X) (l j : list X),
+  x :: y :: l = [] ->
+  y :: l = z :: j ->
+  x = z.
+Proof.
+  intros. inversion H. Qed.
+
+Lemma eq_remove_S : forall n m,
+  n = m -> S n = S m.
+Proof.
+  intros n m eq. rewrite -> eq. reflexivity. Qed.
+
+Theorem beq_nat_eq : forall n m,
+  true = beq_nat n m -> n = m.
+Proof.
+  intros n. induction n as [| n'].
+  Case "n ~ 0".
+    intros m. destruct m as [| m'].
+    SCase "m = 0". reflexivity.
+    SCase "m = S m'". simpl. intros contra. inversion contra.
+  Case "n = S n".
+    intros m. destruct m as [| m'].
+    SCase "m = 0". simpl. intros contra. inversion contra.
+    SCase "m = S m". simpl. intros H.
+      apply eq_remove_S. apply IHn'. apply H. Qed.
+
+Theorem beq_nat_eq' : forall m n,
+  beq_nat n m = true -> n = m.
+Proof.
+  intros m. induction m as [| m'].
+    intros n. induction n as[| m'].
+
 
 
 

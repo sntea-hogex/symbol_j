@@ -1,4 +1,4 @@
-(*Add LoadPath "./".*)
+(* Add LoadPath "./". *)
 
 Require Export basics_j.
 

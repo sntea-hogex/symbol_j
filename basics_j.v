@@ -483,8 +483,34 @@ Proof.
     reflexivity.
 Qed.
 
+Theorem beq_nat_refl : forall (x : nat),
+  true = beq_nat x x.
+Proof.
+  intros.
+  induction x.
+    reflexivity.
+    simpl. apply IHx. Qed.
 
-
-
-
-
+(*補題を立てないver*)
+Theorem mult_comm' : forall m n : nat,
+  m*n = n*m.
+Proof.
+  intros m.
+  induction m as [ | m'].
+  Case "m = O".
+    intros n.
+    rewrite mult_0_r.
+    reflexivity.
+  Case "m = S m'".
+    intros n.
+    simpl.
+    rewrite IHm'.
+    induction n as [| n'].
+    SCase "n = 0".
+      reflexivity.
+    SCase "n = Sn'".
+      simpl.
+      rewrite <- IHn'.
+      rewrite plus_swap.
+      reflexivity.
+Qed.
