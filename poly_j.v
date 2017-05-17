@@ -1,3 +1,5 @@
+(* Add LoadPath "./". *)
+
 Require Export list_j.
 
 Inductive list (X:Type) : Type :=
@@ -195,6 +197,13 @@ Qed.
 
 Theorem curry_uncurry : forall (X Y Z : Type) (f : (X*Y) -> Z) (p : X*Y),
   prod_uncurry (prod_curry f) p = f p.
+Proof.
+  intros.
+  unfold prod_uncurry.
+  unfold prod_curry.
+  destruct p.
+  reflexivity.
+Qed.
 
 Fixpoint filter {X:Type} (test: X->bool) (l:list X)
                 : (list X) :=
@@ -389,8 +398,351 @@ Theorem beq_nat_eq' : forall m n,
   beq_nat n m = true -> n = m.
 Proof.
   intros m. induction m as [| m'].
-    intros n. induction n as[| m'].
+  Case "m ~ O".
+    intros n.
+    SearchAbout beq_nat.
+    rewrite <- beq_nat_sym.
+    destruct n.
+      reflexivity.
+      intros. inversion H.
+  Case "m = S m'".
+    intros n.
+    induction n as[| n'].
+    SCase "n = O".
+      rewrite beq_nat_sym.
+      intros.
+      inversion H.
+    SCase "n = S n'".
+      simpl.
+      intros.
+      assert (n' = m' -> S n' = S m').
+        intros.
+        rewrite H0.
+        reflexivity.
+      apply H0.
+      apply IHm'.
+      apply H.
+Qed.
 
+Theorem length_snoc' : forall (X : Type) (v : X) (l : list X) (n : nat),
+  length l = n ->
+  length (snoc l v) = S n.
+Proof.
+  intros X v l. induction l as [| v' l'].
+  Case "l = []". intros n eq. rewrite <- eq. reflexivity.
+  Case "l = v' :: l'". intros n eq. simpl. destruct n as [| n'].
+    SCase "n = 0". inversion eq.
+    SCase "n = S n".
+      apply eq_remove_S. apply IHl'. inversion eq. reflexivity. Qed.
+
+Theorem beq_nat_0_l : forall n,
+  true = beq_nat 0 n -> 0 = n.
+Proof.
+  intros.
+  apply beq_nat_eq.
+  apply H.
+Qed.
+
+Theorem beq_nat_0_r : forall n,
+  true = beq_nat n 0 -> 0 = n.
+Proof.
+  intros.
+  symmetry.
+  apply beq_nat_eq.
+  apply H.
+Qed.
+
+Theorem double_injective : forall n m,
+     double n = double m ->
+     n = m.
+Proof.
+  intros n. induction n as [| n'].
+  (* WORKED IN CLASS *)
+    Case "n = 0". simpl. intros m eq. destruct m as [| m'].
+      SCase "m = 0". reflexivity.
+      SCase "m = S m'". inversion eq.
+    Case "n = S n'". intros m eq. destruct m as [| m'].
+      SCase "m = 0". inversion eq.
+      SCase "m = S m'".
+        apply eq_remove_S. apply IHn'. inversion eq. reflexivity. Qed.
+
+Theorem S_inj : forall (n m : nat) (b : bool),
+     beq_nat (S n) (S m) = b  ->
+     beq_nat n m = b.
+Proof.
+  intros n m b H. simpl in H. apply H.  Qed.
+
+Theorem silly3' : forall (n : nat),
+  (beq_nat n 5 = true -> beq_nat (S (S n)) 7 = true) ->
+     true = beq_nat n 5  ->
+     true = beq_nat (S (S n)) 7.
+Proof.
+  intros n eq H.
+  symmetry in H. apply eq in H. symmetry in H.
+  apply H.  Qed.
+
+Theorem plus_n_n_indective : forall n m,
+  n+n = m+m -> n = m.
+Proof.
+  intros n. induction n as [| n'].
+  Case "n = 0".
+    intros. simpl in H.
+    destruct m as [| m'].
+    SCase "m = O". reflexivity.
+    SCase "m = S m'". inversion H.
+  Case "n = S n".
+    intros. simpl in H.
+    destruct m as [| m'].
+    SCase "m = O". simpl in H. inversion H.
+    SCase "m = S m'".
+      simpl in H. inversion H.
+      assert(m' + S m' = S m' + m').
+        SSCase "Proof of assertion".
+        apply plus_comm.
+      rewrite plus_comm in H1.
+      rewrite H0 in H1.
+      simpl in H1.
+      inversion H1.
+      apply IHn' in H3.
+      rewrite H3.
+      reflexivity.
+Qed.
+
+Definition sillyfun (n : nat) : bool :=
+  if beq_nat n 3 then false
+  else if beq_nat n 5 then false
+  else false.
+
+Theorem sillyfun_false : forall (n : nat),
+  sillyfun n = false.
+Proof.
+  intros n. unfold sillyfun.
+  destruct (beq_nat n 3).
+    Case "beq_nat n 3 = true". reflexivity.
+    Case "beq_nat n 3 = false". destruct (beq_nat n 5).
+    SCase "beq_nat n 5 = true". reflexivity.
+    SCase "beq_nat n 5 = false". reflexivity. Qed.
+
+Theorem override_shadow : forall {X:Type} x1 x2 k1 k2 (f : nat->X),
+  (override (override f k1 x2) k1 x1) k2 = (override f k1 x1) k2.
+Proof.
+  intros.
+  unfold override.
+  destruct (beq_nat k1 k2).
+  Case "beq_nat k1 k2 = true". reflexivity.
+  Case "beq_nat k1 k2  = false". reflexivity.
+Qed.
+
+
+Theorem combine_split : forall X Y (l : list (X * Y)) l1 l2,
+  split l = (l1, l2) ->
+  combine l1 l2 = l.
+Proof.
+  intros X Y l. induction l as [| [x y] l'].
+  Case "l = []".
+    simpl.
+    intros.
+    inversion H.
+    reflexivity.
+  Case "l = cons (x y) l'".
+    simpl. destruct (split l') as [l1' l2'].
+    intros.
+    inversion H.
+    simpl.
+    assert(combine l1' l2' = l' -> (x, y) :: combine l1' l2' = (x, y) :: l').
+    SCase "Proof of assertion".
+      intros.
+      rewrite H0.
+      reflexivity.
+    apply H0.
+    apply IHl'.
+    reflexivity.
+Qed.
+
+Theorem split_combine : forall X Y (l1 : list X) (l2 : list Y),
+  length l1 = length l2 -> split (combine l1 l2) = (l1, l2).
+Proof.
+  intros X Y l1.
+  induction l1 as [| x l1'].
+  Case "l1 = []".
+    intros.
+    assert (l2 = []).
+    SCase "Proof of assertion".
+      simpl in H.
+      destruct l2.
+      SSCase "l2 = []".
+        reflexivity.
+      SSCase "l2 = y::l2".
+        inversion H.
+    rewrite H0.
+    reflexivity.
+  Case "l1 = x::l1'".
+    simpl.
+    intros.
+    destruct l2 as [| y l2'].
+    SCase "l2 = []".
+      inversion H.
+    SCase "l2 = y :: l2".
+      simpl.
+      assert(length l1' = length l2' -> split (combine l1' l2') = (l1', l2')).
+        apply IHl1'.
+      destruct (split (combine l1' l2')) as [ls1 ls2].
+      assert ((ls1,ls2) = (l1', l2') -> (x::ls1, y::ls2) = (x::l1', y::l2')) as Ha.
+      SSCase "Proof of assertion".
+        intros.
+        inversion H1.
+        reflexivity.
+    apply  Ha.
+    apply H0.
+    simpl in H.
+    inversion H.
+    reflexivity.
+Qed.
+
+Definition sillyfun1 (n : nat) : bool :=
+  if beq_nat n 3 then true
+  else if beq_nat n 5 then true
+  else false.
+
+Theorem silly_fun1_odd : forall (n : nat),
+  sillyfun1 n = true ->
+  oddb n = true.
+Proof.
+  intros n eq. unfold sillyfun1 in eq.
+  remember (beq_nat n 3) as e3.
+  destruct (e3).
+    Case "e3 = true ". apply beq_nat_eq in Heqe3.
+      rewrite -> Heqe3. reflexivity.
+    Case "e3 = false".
+      remember (beq_nat n 5) as e5. destruct e5.
+        SCase "e5 = true".
+          apply beq_nat_eq in Heqe5.
+          rewrite Heqe5. reflexivity.
+        SCase "e5 = false". inversion eq. Qed.
+
+Theorem override_same : forall {X : Type} x1 k1 k2 (f : nat->X),
+  f k1 = x1 ->
+  (override f k1 x1) k2 = f k2.
+Proof.
+  intros.
+  unfold override.
+  remember (beq_nat k1 k2) as b.
+  destruct (b).
+  Case "b = true".
+    apply beq_nat_eq in Heqb.
+    rewrite Heqb in H.
+    symmetry.
+    apply H.
+  Case "b = false". reflexivity.
+Qed.
+
+Theorem filter_exercise : forall (X : Type) (test : X -> bool)
+                             (x : X) (l lf : list X),
+     filter test l = x :: lf ->
+     test x = true.
+Proof.
+  intros X test x l.
+  induction l.
+  Case "l = []".
+    intros.
+    simpl in H.
+    inversion H.
+  Case "l = x0 :: l".
+    intros.
+    simpl in H.
+    remember (test x0).
+    destruct b.
+    inversion H.
+    rewrite <- H1.
+    symmetry.
+    apply Heqb.
+    assert (filter test l = x::lf -> test x = true).
+      apply IHl.
+    apply H0.
+    apply H.
+Qed.
+
+Example trans_eq_example : forall (a b c d e f : nat),
+     [a,b] = [c,d] ->
+     [c,d] = [e,f] ->
+     [a,b] = [e,f].
+Proof.
+  intros a b c d e f eq1 eq2.
+  rewrite -> eq1. rewrite -> eq2. reflexivity.  Qed.
+
+Theorem trans_eq : forall {X:Type} (n m o : X),
+  n = m -> m = o -> n = o.
+Proof.
+  intros X n m o eq1 eq2. rewrite -> eq1. rewrite -> eq2.
+  reflexivity.  Qed.
+
+Example trans_eq_example' : forall (a b c d e f : nat),
+     [a,b] = [c,d] ->
+     [c,d] = [e,f] ->
+     [a,b] = [e,f].
+Proof.
+  intros a b c d e f eq1 eq2.
+  apply trans_eq with (m:=[c,d]). apply eq1. apply eq2.   Qed.
+
+Example trans_eq_exercise : forall (n m o p : nat),
+     m = (minustwo o) ->
+     (n + p) = m ->
+     (n + p) = (minustwo o).
+Proof.
+  intros.
+  apply trans_eq with (m0:=m).
+  apply H0.
+  apply H.
+Qed.
+
+Theorem beq_nat_trans : forall n m p,
+  true = beq_nat n m ->
+  true = beq_nat m p ->
+  true = beq_nat n p.
+Proof.
+  intros.
+  apply beq_nat_eq in H.
+  apply beq_nat_eq in H0.
+  assert (n = p).
+  apply trans_eq with (m0:=m).
+  apply H.
+  apply H0.
+  rewrite H.
+  rewrite H0.
+  apply beq_nat_refl.
+Qed.
+
+Theorem override_permute : forall {X:Type} x1 x2 k1 k2 k3 (f : nat->X),
+  false = beq_nat k2 k1 ->
+  (override (override f k2 x2) k1 x1) k3 = (override (override f k1 x1) k2 x2) k3.
+Proof.
+  intros.
+  unfold override.
+  remember (beq_nat k1 k3).
+  remember (beq_nat k2 k3).
+  destruct b.
+  Case "b = true".
+    destruct b0.
+    SCase "b0 = true".
+      apply beq_nat_eq in Heqb.
+      apply beq_nat_eq in Heqb0.
+      assert(k1 = k2).
+        apply trans_eq with (m:=k3).
+        apply Heqb.
+        symmetry.
+        apply Heqb0.
+      rewrite H0 in H.
+      rewrite <- beq_nat_refl in H.
+      inversion H.
+    SCase "b0 = false".
+      reflexivity.
+  Case "b = false".
+    destruct b0.
+    SCase "b0 = true".
+      reflexivity.
+    SCase "b0 = false".
+      reflexivity.
+Qed.
 
 
 
