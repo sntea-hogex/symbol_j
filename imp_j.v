@@ -184,8 +184,90 @@ Proof.
     reflexivity.
 Qed.
 
-Fixpoint optimize_0plus (a:aexp) : aexp :=
+(*
+Fixpoint my_optimize (a:aexp) : aexp :=
+  match a with
+  | ANum n => ANum n
+  | APlus (ANum 0) e2 =>
+      my_optimize e2
+  | APlus e1 e2 =>
+      APlus (my_optimize e1) (my_optimize e2)
+  | AMinus (ANum 0) e2 =>
+      my_optimize e2
+  | AMinus e1 e2 =>
+      AMinus (my_optimize e1) (my_optimize e2)
+  | AMult (ANum 1) e2 =>
+      my_optimize e2
+  | AMult e1 e2 =>
+      AMult (my_optimize e1) (my_optimize e2)
+  end.
+*)
+
+Fixpoint my_optimize (a:aexp) : aexp :=
+  match a with
+  | ANum n => ANum n
+  | APlus (ANum 0) e2 =>
+      my_optimize e2
+  | APlus e1 (ANum 0) =>
+      my_optimize e1
+  | APlus e1 e2 =>
+      APlus (my_optimize e1) (my_optimize e2)
+  | AMinus e1 e2 =>
+      AMinus (my_optimize e1) (my_optimize e2)
+  | AMult e1 e2 =>
+      AMult (my_optimize e1) (my_optimize e2)
+  end.
+
+
+
+Theorem my_optimize_sound : forall (e:aexp),
+  aeval(e) = aeval(my_optimize(e)).
+Proof.
+  intros.
+  aexp_cases (induction e) Case; try(simpl; reflexivity).
   
+  destruct e1.
+    destruct n; try(simpl; reflexivity).
+      simpl. rewrite IHe2. reflexivity.
+      destruct e2;try(simpl; simpl in IHe1; simpl in IHe2; rewrite IHe2; reflexivity); try(simpl; reflexivity).
+        destruct n0.
+          simpl. SearchAbout(_+0). rewrite <- plus_n_O. reflexivity.
+    simpl. reflexivity.
+    simpl. simpl in IHe1. rewrite IHe1. rewrite IHe2. reflexivity.
+
+  aexp_cases (induction e) Case;
+    try(simpl; rewrite IHe1; rewrite IHe2); try (reflexivity).
+  
+  
+  
+  fold my_optimize.
+  aexp_cases (destruct e1) SCase;
+    try(simpl; simpl in IHe1; rewrite IHe1; rewrite IHe2); try(reflexivity).
+    
+    destruct n. reflexivity.
+    aexp_cases (destruct e2) SSCase; try(simpl; simpl in IHe1; rewrite IHe1; rewrite IHe2); try (reflexivity).
+      destruct n0.
+        simpl. SearchAbout(_+0). rewrite <- plus_n_O. reflexivity.
+        simpl. reflexivity.
+      simpl.
+      destruct n0; simpl; try(reflexivity).
+        SearchAbout (_+0).
+        rewrite <- plus_n_O.
+        reflexivity.
+    destruct e2; 
+  
+  destruct n.
+    simpl.
+    apply IHe2.
+    simpl.
+    rewrite IHe2.
+    reflexivity.
+    simpl.
+  try(simpl; rewrite IHe; rewrite IHe2; reflexivity).
+    
+
+
+
 
 
 
